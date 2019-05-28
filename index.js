@@ -2,14 +2,13 @@ const fs = require('fs');
 const util = require('util');
 var path = require('path');
 
-function logCompletion(name){
-    console.log(`Finished Writing file ${name}`)
-}
 
 const isItGoodOrBad = () => { 
     let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
     return chance < 7 ? true : false
 }
+
+
 
 function writeFileAsync(directory, file){
     return new Promise( (resolve,reject) => {
@@ -35,30 +34,30 @@ function delayFiveSec(){
 }
 
 async function taskOne(x, location){
-    console.log('** Starting task taskOne **')
+    console.log('** Starting task task One **')
     for(var i = 1; i <= x; i++) {
         let name = `taskOne_${i}`;
         await writeFileAsync(location,name)
         .then( () => console.log(`Finished Writing file ${name}`))
     }
-    console.log('** Finished with taskOne **')
+    console.log('** Finished with task One **')
 }
 
 async function taskTwo(x, location){
-    console.log('** Starting task taskTwo **')
+    console.log('** Starting task Two **')
     const filesToWrite = []
     for(var i = 1; i <= x; i++){
         let name = `taskTwo_${i}`
         filesToWrite.push(writeFileAsync(location, name).then( () => console.log(`Finished Writing file taskTwo_${name}`)))
     }
     await Promise.all(filesToWrite)
-    console.log(`** Finished with taskTwo **`)
+    console.log(`** Finished with task Two **`)
 }
 
 async function taskThree(x, location){
-    console.log('** Starting task taskThree **')
-    const badPath = path.join(__dirname,`/notHome`);
+    console.log('** Starting task Three **')
     const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
+    const badPath = path.join(__dirname,`/notHome`);
     for(var i = 1; i <= x; i++){
         let name = `taskThree_${i}`;
         let directionIsGood = isItGoodOrBad();
@@ -83,8 +82,45 @@ async function taskThree(x, location){
             .catch( (err) => console.log(`Failed to write ${name}`) )
         }
     }
-    console.log(`** Finished with taskThree **`)
+    console.log(`** Finished with task Three **`)
 }
+
+async function taskFour(x, location){
+    const badPath = path.join(__dirname,`/notHome`);
+    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
+
+    console.log(`** Starting task Four **`)
+    const filesToWrite = []
+    for(var i = 1; i <= x; i++){
+        let name = `taskFour_${i}`
+        let directionIsGood = isItGoodOrBad();
+        if(directionIsGood){
+            if(i === randomlyDelayedIndex){
+                filesToWrite.push(delayFiveSec().then( () => {
+                    writeFileAsync(location,name)
+                    .then( () => console.log(`Finished Writing file ${name}`))
+                }))
+            } else{
+                filesToWrite.push(writeFileAsync(location, name).then( () => console.log(`Finished Writing file ${name}`)))
+            }
+        } else {
+            if(i === randomlyDelayedIndex){
+                filesToWrite.push(delayFiveSec().then( () => {
+                    writeFileAsync(badPath,name)
+                    .then( () => console.log(`Finished Writing file ${name}`))
+                }))
+            } else{
+                filesToWrite.push(writeFileAsync(badPath, name)
+                    .then( () => console.log(`Finished Writing file ${name}`))
+                    .catch( (err) => console.log(`Failed to write ${name}`)  )
+                    )
+            }
+        }
+    }
+    await Promise.all(filesToWrite)
+    console.log(`** Finished with taskFour **`)
+}
+
 
 async function main(){
     const folderName = String(Date.now());
@@ -95,8 +131,8 @@ async function main(){
     taskOne(7, location)
     .then(() => taskTwo(7,location))
     .then(() => taskThree(7,location))
+    .then( () => taskFour(7, location))
     .catch(console.error)
-
 }
 
 
