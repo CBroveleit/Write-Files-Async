@@ -3,8 +3,12 @@ const util = require('util');
 var path = require('path');
 
 function logCompletion(name){
-            console.log(`Finished Writing file ${name}`)
+    console.log(`Finished Writing file ${name}`)
+}
 
+const isItGoodOrBad = () => { 
+    let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
+    return chance < 7 ? true : false
 }
 
 function writeFileAsync(directory, file){
@@ -20,82 +24,79 @@ function writeFileAsync(directory, file){
     })
 }
 
-function logFailure(name){
-    
-}
-
-
 function delayFiveSec(){
     return new Promise(resolve => {
         console.log(`Starting 5s delay at ${Date.now()}`);
-        setTimeout(() => {console.log(`Ending 5s delay at ${Date.now()}`)}, 5000)
+        setTimeout(() => {
+            console.log(`Ending 5s delay at ${Date.now()}`)
+            resolve()
+        }, 5000)
     });
 }
 
 async function taskOne(x, location){
-        console.log('** Starting task taskOne **')
-        let i = 1;
-        while(i <= x){
-            let name = `taskOne_${i}`;
-            await writeFileAsync(location,name)
-            .then(logCompletion(name))
-            .then(i++)
-        }
-        console.log('** Finished with taskOne **')
+    console.log('** Starting task taskOne **')
+    for(var i = 1; i <= x; i++) {
+        let name = `taskOne_${i}`;
+        await writeFileAsync(location,name)
+        .then( () => console.log(`Finished Writing file ${name}`))
+    }
+    console.log('** Finished with taskOne **')
 }
 
 async function taskTwo(x, location){
-        console.log('** Starting task taskTwo **')
-        let i = 1;
-
-        function runTheFile(callback){
-            return new Promise( resolve => {
-                while(i <= x){
-                    let name = `taskTwo_${i}`;
-                        writeFileAsync(location, name)
-                        .then((success) => logCompletion(name))
-                        i++
-                }
-            })
-        }
-
-        await runTheFile(console.log(`** Finished with taskTwo **`))
+    console.log('** Starting task taskTwo **')
+    const filesToWrite = []
+    for(var i = 1; i <= x; i++){
+        let name = `taskTwo_${i}`
+        filesToWrite.push(writeFileAsync(location, name).then( () => console.log(`Finished Writing file taskTwo_${name}`)))
+    }
+    await Promise.all(filesToWrite)
+    console.log(`** Finished with taskTwo **`)
 }
 
 async function taskThree(x, location){
     console.log('** Starting task taskThree **')
     const badPath = path.join(__dirname,`/notHome`);
     const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
-    const isItGoodOrBad = () => { 
-        let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
-        return chance < 7 ? true : false
-    }
-    let i = 1;
-    while(i <= x){
+    for(var i = 1; i <= x; i++){
         let name = `taskThree_${i}`;
         let directionIsGood = isItGoodOrBad();
+        if(i === randomlyDelayedIndex){
+            await delayFiveSec().then( async () => {
+                if(directionIsGood){
+                    await writeFileAsync(location,name)
+                    .then( () => console.log(`Finished Writing file ${name}`) )
+                } else{
+                    await writeFileAsync(badPath, name)
+                    .then( () => console.log(`Finished Writing file ${name}`) )
+                    .catch( (err) => console.log(`Failed to write ${name}`) )
+                }               
+            })
+        }
         if(directionIsGood){
-            await writeFileAsync(location, name)
-            .then(logCompletion(name))
-            .then(i++)
+            await writeFileAsync(location,name)
+            .then( () => console.log(`Finished Writing file ${name}`) )
         } else{
             await writeFileAsync(badPath, name)
-            .then((success)=> logCompletion(name))
-            .catch((err) => console.log(`Failed to write ${name}`))
-            .then(i++)
+            .then( () => console.log(`Finished Writing file ${name}`) )
+            .catch( (err) => console.log(`Failed to write ${name}`) )
         }
     }
     console.log(`** Finished with taskThree **`)
 }
 
-function main(){
+async function main(){
     const folderName = String(Date.now());
     const x = Number(folderName.slice(-1));
     const location = path.join(__dirname,folderName);
     fs.mkdir(location, ()=> {});
+
     taskOne(7, location)
-    .then(() => taskTwo(7,location)
-    .then( () => taskThree(7,location)))
+    .then(() => taskTwo(7,location))
+    .then(() => taskThree(7,location))
+    .catch(console.error)
+
 }
 
 
