@@ -32,60 +32,60 @@ function delayFiveSec(){
     });
 }
 
-function taskOne(x, location){
-    return new Promise(resolve => {
-        console.log('Starting task taskOne')
+async function taskOne(x, location){
+        console.log('** Starting task taskOne **')
         let i = 1;
         while(i <= x){
             let name = `taskOne_${i}`;
-            writeFileAsync(location,name)
+            await writeFileAsync(location,name)
             .then(logCompletion(name))
             .then(i++)
         }
         console.log('** Finished with taskOne **')
-    })
 }
 
-function taskTwo(x, location){
-    return new Promise(resolve => {
-        console.log('Starting task taskTwo')
+async function taskTwo(x, location){
+        console.log('** Starting task taskTwo **')
         let i = 1;
-        while(i <= x){
-            let name = `taskTwo_${i}`;
-                writeFileAsync(location, name)
-                .then((success) => logCompletion(name))
-                .then(i++)
+
+        function runTheFile(callback){
+            return new Promise( resolve => {
+                while(i <= x){
+                    let name = `taskTwo_${i}`;
+                        writeFileAsync(location, name)
+                        .then((success) => logCompletion(name))
+                        i++
+                }
+            })
         }
-        console.log(`** Finished with taskTwo **`)
-    })
+
+        await runTheFile(console.log(`** Finished with taskTwo **`))
 }
 
-function taskThree(x, location){
-    return new Promise( resolve => {
-        console.log('Starting task taskThree')
-        const badPath = path.join(__dirname,`/notHome`);
-        const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
-        const isItGoodOrBad = () => { 
-            let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
-            return chance < 7 ? true : false
+async function taskThree(x, location){
+    console.log('** Starting task taskThree **')
+    const badPath = path.join(__dirname,`/notHome`);
+    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
+    const isItGoodOrBad = () => { 
+        let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
+        return chance < 7 ? true : false
+    }
+    let i = 1;
+    while(i <= x){
+        let name = `taskThree_${i}`;
+        let directionIsGood = isItGoodOrBad();
+        if(directionIsGood){
+            await writeFileAsync(location, name)
+            .then(logCompletion(name))
+            .then(i++)
+        } else{
+            await writeFileAsync(badPath, name)
+            .then((success)=> logCompletion(name))
+            .catch((err) => console.log(`Failed to write ${name}`))
+            .then(i++)
         }
-        let i = 1;
-        while(i <= x){
-            let name = `taskThree_${i}`;
-            let directionIsGood = isItGoodOrBad();
-            if(directionIsGood){
-                writeFileAsync(location, name)
-                .then(logCompletion(name))
-                .then(i++)
-            } else{
-                writeFileAsync(badPath, name)
-                .then(logCompletion(name))
-                .catch((err)=> {console.log(`Failed to write ${name}`)})
-                .then(i++)
-            }
-        }
-        console.log(`** Finished with taskThree **`)
-    })
+    }
+    console.log(`** Finished with taskThree **`)
 }
 
 function main(){
@@ -93,9 +93,9 @@ function main(){
     const x = Number(folderName.slice(-1));
     const location = path.join(__dirname,folderName);
     fs.mkdir(location, ()=> {});
-    return taskOne(7, location)
-    .then(taskTwo(7,location))
-    .then(taskThree(7,location)) 
+    taskOne(7, location)
+    .then(() => taskTwo(7,location)
+    .then( () => taskThree(7,location)))
 }
 
 
