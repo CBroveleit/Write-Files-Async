@@ -3,7 +3,7 @@ const util = require('util');
 var path = require('path');
 
 
-const isItGoodOrBad = () => { 
+const isPathCorrect = () => { 
     let chance =  Math.floor(Math.random()*Math.floor(10)+1) 
     return chance < 7 ? true : false
 }
@@ -23,14 +23,23 @@ function writeFileAsync(directory, file){
     })
 }
 
-function delayFiveSec(){
-    return new Promise(resolve => {
-        console.log(`Starting 5s delay at ${Date.now()}`);
-        setTimeout(() => {
-            console.log(`Ending 5s delay at ${Date.now()}`)
-            resolve()
-        }, 500)
-    });
+function delayFiveSec(condition){
+    if(condition === true){
+        return new Promise(resolve => {
+            console.log(`** Starting 5s delay at ${Date.now()} **`);
+            setTimeout(() => {
+                console.log(`** Ending 5s delay at ${Date.now()} **`)
+                resolve()
+            }, 5000)
+        });
+    }
+    else {
+        return Promise.resolve()
+    }
+}
+
+function randomlyDelayIndex(x){
+    return Math.floor(Math.random()*Math.floor(x+1));
 }
 
 async function taskOne(x, location){
@@ -38,7 +47,7 @@ async function taskOne(x, location){
     for(var i = 1; i <= x; i++) {
         let name = `taskOne_${i}`;
         await writeFileAsync(location,name)
-        .then( () => console.log(`Finished Writing file ${name}`))
+        console.log(`Finished Writing file ${name}`)
     }
     console.log('** Finished with task One **')
 }
@@ -48,7 +57,9 @@ async function taskTwo(x, location){
     const filesToWrite = []
     for(var i = 1; i <= x; i++){
         let name = `taskTwo_${i}`
-        filesToWrite.push(writeFileAsync(location, name).then( () => console.log(`Finished Writing file taskTwo_${name}`)))
+        filesToWrite.push(
+            writeFileAsync(location, name)
+            .then( () => console.log(`Finished Writing file taskTwo_${name}`)))
     }
     await Promise.all(filesToWrite)
     console.log(`** Finished with task Two **`)
@@ -56,67 +67,39 @@ async function taskTwo(x, location){
 
 async function taskThree(x, location){
     console.log('** Starting task Three **')
-    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
-    const badPath = path.join(__dirname,`/notHome`);
+    const delayedIndex = randomlyDelayIndex(x);
+
     for(var i = 1; i <= x; i++){
         let name = `taskThree_${i}`;
-        let directionIsGood = isItGoodOrBad();
-        if(i === randomlyDelayedIndex){
-            await delayFiveSec().then( async () => {
-                if(directionIsGood){
-                    await writeFileAsync(location,name)
-                    .then( () => console.log(`Finished Writing file ${name}`) )
-                } else{
-                    await writeFileAsync(badPath, name)
-                    .then( () => console.log(`Finished Writing file ${name}`) )
-                    .catch( (err) => console.log(`Failed to write ${name}`) )
-                }               
-            })
+        let l = isPathCorrect() ? location : path.join(__dirname,`/notHome`);
+
+        await delayFiveSec(i === delayedIndex)
+        try {
+            await writeFileAsync(l, name)
+            console.log(`Finished Writing file ${name}`)
         }
-        if(directionIsGood){
-            await writeFileAsync(location,name)
-            .then( () => console.log(`Finished Writing file ${name}`) )
-        } else{
-            await writeFileAsync(badPath, name)
-            .then( () => console.log(`Finished Writing file ${name}`) )
-            .catch( (err) => console.log(`Failed to write ${name}`) )
+        catch(e){
+            console.log(`Failed to write file ${name}`)
         }
     }
     console.log(`** Finished with task Three **`)
 }
 
 async function taskFour(x, location){
-    const badPath = path.join(__dirname,`/notHome`);
-    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
-
     console.log(`** Starting task Four **`)
+    const delayedIndex = randomlyDelayIndex(x);
     const filesToWrite = []
+
     for(var i = 1; i <= x; i++){
         let name = `taskFour_${i}`
-        let directionIsGood = isItGoodOrBad();
-        if(directionIsGood){
-            if(i === randomlyDelayedIndex){
-                filesToWrite.push(delayFiveSec().then( () => {
-                    return writeFileAsync(location,name)
-                })
-                .then( () => console.log(`Finished delay Writing file ${name}`)))
-            } else{
-                filesToWrite.push(writeFileAsync(location, name).then( () => console.log(`Finished Writing file ${name}`)))
-            }
-        } else {
-            if(i === randomlyDelayedIndex){
-                filesToWrite.push(delayFiveSec().then( () => {
-                    return writeFileAsync(badPath,name)
-                })
-                .then( () => console.log(`Finished delayed Writing file ${name}`))
-                .catch( (err) => console.log(`Failed to write ${name}`)))
-            } else{
-                filesToWrite.push(writeFileAsync(badPath, name)
-                    .then( () => console.log(`Finished Writing file ${name}`))
-                    .catch( (err) => console.log(`Failed to write ${name}`)  )
-                    )
-            }
-        }
+        let l = isPathCorrect() ? location : path.join(__dirname,`/notHome`);
+
+        filesToWrite.push(
+            delayFiveSec(i === delayedIndex)
+            .then( () => {return writeFileAsync(l,name)})
+            .then( () => console.log(`Finished Writing file ${name}`))
+            .catch( (err) => console.log(`Failed to write ${name}`))
+        )
     }
     await Promise.all(filesToWrite)
     console.log(`** Finished with taskFour **`)
@@ -125,44 +108,18 @@ async function taskFour(x, location){
 
 async function taskFive(x,location){
     console.log('** Starting task Five **')
-    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1)+1);
-    const badPath = path.join(__dirname,`/notHome`);
+    const randomlyDelayedIndex = Math.floor(Math.random()*Math.floor(x+1));
     for(var i = 1; i <= x; i++){
         let name = `taskFive_${i}`;
-        let directionIsGood = isItGoodOrBad();
-        if(i === randomlyDelayedIndex){
-
-            await delayFiveSec()
-            if(directionIsGood){
-                await writeFileAsync(location,name)
-                console.log(`Finished Writing file ${name}`)
-            }
-            else {
-                try {
-                    await writeFileAsync(badPath, name)
-                    console.log(`Finished Writing file ${name}`)
-                }
-                catch(e){
-                    console.log(`Failed to write file ${name}`)
-                    break;
-                }
-            }
-            
-        }else{
-            if(directionIsGood){
-                await writeFileAsync(location,name)
-                console.log(`Finished Writing file ${name}`)
-            } else {
-                try {
-                    await writeFileAsync(badPath, name)
-                    console.log(`Finished Writing file ${name}`)
-
-                }
-                catch(e){
-                    console.log(`Failed to write file ${name}`)
-                    break;
-                }   
-            }
+        let l = isPathCorrect() ? location : path.join(__dirname,`/notHome`);
+        await delayFiveSec(() => i === randomlyDelayedIndex)
+        try {
+            await writeFileAsync(l, name)
+            console.log(`Finished Writing file ${name}`)
+        }
+        catch(e){
+            console.log(`Failed to write file ${name}`)
+            break;
         }
     }
     console.log(`** Finished with task Five **`)
