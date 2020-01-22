@@ -7,7 +7,7 @@ fileNumber is the order in which the files were created.
 Log `Creating file [fileName]` to the console before the file is written.
 Log `Finished creating file [fileName]` after the file is written.
 
-Task 2. Create X numbered files named `taskTwo_[1-X]`.
+Task 2. Create X numbered files named `taskTwo_[1-5]`.
 The result should be files numbered 1-5 irrelevant of write order
 The files should be written all at once without waiting for others to complete.
 Log `Creating file [fileName]` to the console before the file is written.
